@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="520" viewBox="0 0 1800 520">
+<rect width="1800" height="520" fill="#F3F7F8"/>
+<g transform="translate(54,42) scale(.426)"><rect width="1024" height="1024" rx="176" fill="#071A2B"/>
+<path d="M112 528 L320 320 Q354 286 390 318 L526 438 L431 533 L356 467 L207 616 Z" fill="#12A89A"/>
+<path d="M912 528 L704 320 Q670 286 634 318 L498 438 L593 533 L668 467 L817 616 Z" fill="#F3F7F8"/>
+<path d="M356 467 L463 574 Q512 623 561 574 L668 467 L748 547 L603 692 Q512 783 421 692 L276 547 Z" fill="#066B63"/>
+<path d="M456 568 L500 612 L580 522" fill="none" stroke="#F3F7F8" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<text x="548" y="300" font-family="Sora,Arial,sans-serif" font-size="176" font-weight="700" fill="#071A2B">Sim</text>
+<text x="858" y="300" font-family="Sora,Arial,sans-serif" font-size="176" font-weight="600" fill="#066B63">Proposta</text>
+<text x="557" y="383" font-family="Manrope,Arial,sans-serif" font-size="32" font-weight="700" letter-spacing="5" fill="#294858">ENVIE · NEGOCIE · AVANCE</text>
+</svg>
