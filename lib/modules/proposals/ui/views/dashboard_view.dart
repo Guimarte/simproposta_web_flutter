@@ -11,8 +11,8 @@ import '../../../supervisor/ui/widgets/super_admin_report_widget.dart';
 import '../../cubit/proposals_cubit.dart';
 import '../../cubit/proposals_state.dart';
 import '../widgets/create_proposal_dialog_widget.dart';
-import '../widgets/metric_card_widget.dart';
 import '../widgets/proposal_item_card_widget.dart';
+import '../widgets/store_analytics_widget.dart';
 
 class DashboardView extends StatefulWidget {
   const DashboardView({super.key});
@@ -113,14 +113,14 @@ class _DashboardViewState extends State<DashboardView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      role == 'SUPER_ADMIN' ? 'Painel Administrativo do Supervisor' : 'Visão Geral — ${user?.name ?? "Usuário"}',
+                      role == 'SUPER_ADMIN' ? 'Painel Administrativo do Supervisor' : 'Painel Comercial & Analytics — ${user?.name ?? "Usuário"}',
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textMain),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       role == 'SUPER_ADMIN'
                           ? 'Gestão de Lojas Clientes, Limite de Vendedores e Volume de Emissão de Propostas.'
-                          : 'Acordo Sólido — Confiança imediatamente visível.',
+                          : 'Acompanhamento em Tempo Real de Vendas, Rastreamento e Conversão.',
                       style: TextStyle(color: textSub, fontSize: 14),
                     ),
                   ],
@@ -189,81 +189,56 @@ class _DashboardViewState extends State<DashboardView> {
             if (role == 'SUPER_ADMIN')
               const SuperAdminReportWidget()
 
-            // MODO 2: Se for COMPANY_ADMIN ou SELLER -> Exibe Operacional de Vendas da Loja
+            // MODO 2: Se for COMPANY_ADMIN ou SELLER -> Exibe Relatórios Visuais & Funil Analytics da Loja
             else ...[
-              // Métricas em Cards de Vendas
-              BlocBuilder<ProposalsCubit, ProposalsState>(
-                builder: (context, state) {
-                  int totalCount = 0;
-                  double totalValue = 0.0;
-
-                  if (state is ProposalsLoaded) {
-                    totalCount = state.proposals.length;
-                    totalValue = state.proposals.fold(0.0, (sum, item) => sum + item.totalValue);
-                  }
-
-                  return Row(
-                    children: [
-                      MetricCardWidget(
-                        label: 'Total de Propostas Enviadas',
-                        value: '$totalCount',
-                        icon: Icons.description_outlined,
-                        color: primaryColor,
-                      ),
-                      const SizedBox(width: 16),
-                      MetricCardWidget(
-                        label: 'Faturamento em Negociação',
-                        value: 'R\$ ${totalValue.toStringAsFixed(2)}',
-                        icon: Icons.attach_money_rounded,
-                        color: SimPropostaColors.mint,
-                      ),
-                    ],
-                  );
-                },
-              ),
-              const SizedBox(height: 32),
-
-              Text(
-                'Propostas Comerciais Ativas',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textMain),
-              ),
-              const SizedBox(height: 16),
-
-              // Lista de Propostas da Loja
               BlocBuilder<ProposalsCubit, ProposalsState>(
                 builder: (context, state) {
                   if (state is ProposalsLoading) {
-                    return Center(child: CircularProgressIndicator(color: primaryColor));
+                    return Center(child: Padding(padding: const EdgeInsets.all(40), child: CircularProgressIndicator(color: primaryColor)));
                   }
                   if (state is ProposalsError) {
                     return Center(child: Text(state.message, style: const TextStyle(color: SimPropostaColors.error)));
                   }
                   if (state is ProposalsLoaded) {
-                    if (state.proposals.isEmpty) {
-                      return Container(
-                        padding: const EdgeInsets.all(40),
-                        decoration: BoxDecoration(
-                          color: isDark ? SimPropostaColors.darkSurface : SimPropostaColors.surface,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Nenhuma proposta criada ainda. Clique em "Nova Proposta" acima para começar.',
-                            style: TextStyle(color: textSub, fontSize: 14),
-                          ),
-                        ),
-                      );
-                    }
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Gráficos e Analytics da Loja
+                        StoreAnalyticsWidget(proposals: state.proposals),
+                        const SizedBox(height: 32),
 
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: state.proposals.length,
-                      itemBuilder: (context, index) {
-                        final item = state.proposals[index];
-                        return ProposalItemCardWidget(item: item);
-                      },
+                        Text(
+                          'Propostas Comerciais Ativas',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textMain),
+                        ),
+                        const SizedBox(height: 16),
+
+                        if (state.proposals.isEmpty)
+                          Container(
+                            padding: const EdgeInsets.all(40),
+                            decoration: BoxDecoration(
+                              color: isDark ? SimPropostaColors.darkSurface : SimPropostaColors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
+                            ),
+                            child: Center(
+                              child: Text(
+                                'Nenhuma proposta criada ainda. Clique em "Nova Proposta" acima para começar.',
+                                style: TextStyle(color: textSub, fontSize: 14),
+                              ),
+                            ),
+                          )
+                        else
+                          ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: state.proposals.length,
+                            itemBuilder: (context, index) {
+                              final item = state.proposals[index];
+                              return ProposalItemCardWidget(item: item);
+                            },
+                          ),
+                      ],
                     );
                   }
                   return const SizedBox();
