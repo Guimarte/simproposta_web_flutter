@@ -3,10 +3,10 @@ import 'package:http/http.dart' as http;
 import '../../domain/entities/proposal_entity.dart';
 
 class ProposalRemoteDatasource {
-  // URL Oficial em Produção (Locaweb / Render API)
+  // URL Oficial em Produção (Locaweb / Render API) — SimAprova
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://api.simproposta.com.br/api',
+    defaultValue: 'https://api.simaprova.com.br/api',
   );
 
   Future<List<ProposalEntity>> getProposals(String token) async {

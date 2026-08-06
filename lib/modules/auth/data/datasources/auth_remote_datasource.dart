@@ -4,10 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/user_entity.dart';
 
 class AuthRemoteDatasource {
-  // URL Oficial em Produção (Locaweb / Render API)
+  // URL Oficial em Produção (Locaweb / Render API) — SimAprova
   static const String baseUrl = String.fromEnvironment(
     'API_URL',
-    defaultValue: 'https://api.simproposta.com.br/api',
+    defaultValue: 'https://api.simaprova.com.br/api',
   );
   
   static const String _tokenKey = 'simproposta_jwt_token';

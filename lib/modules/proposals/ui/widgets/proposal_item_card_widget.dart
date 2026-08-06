@@ -9,9 +9,9 @@ class ProposalItemCardWidget extends StatelessWidget {
   const ProposalItemCardWidget({super.key, required this.item});
 
   void _copyProposalLink(BuildContext context) {
-    const apiHost = String.fromEnvironment('API_HOST', defaultValue: 'https://api.simproposta.com.br');
-    // Gera a URL White-Label: https://api.simproposta.com.br/nome-da-empresa/slug-da-proposta
-    final companySlug = 'agencia-solucoes'; // Slug da empresa cliente
+    const apiHost = String.fromEnvironment('API_HOST', defaultValue: 'https://api.simaprova.com.br');
+    // Gera a URL White-Label: https://api.simaprova.com.br/nome-da-empresa/slug-da-proposta
+    final companySlug = 'agencia-solucoes';
     final link = '$apiHost/$companySlug/${item.slug}';
 
     Clipboard.setData(ClipboardData(text: link));
