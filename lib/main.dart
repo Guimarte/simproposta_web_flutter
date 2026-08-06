@@ -11,11 +11,11 @@ import 'modules/proposals/data/datasources/proposal_remote_datasource.dart';
 import 'modules/proposals/ui/views/dashboard_view.dart';
 
 void main() {
-  runApp(const SimPropostaApp());
+  runApp(const SimAprovaApp());
 }
 
-class SimPropostaApp extends StatelessWidget {
-  const SimPropostaApp({super.key});
+class SimAprovaApp extends StatelessWidget {
+  const SimAprovaApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +32,7 @@ class SimPropostaApp extends StatelessWidget {
         ),
       ],
       child: MaterialApp(
-        title: 'SimProposta SaaS',
+        title: 'SimAprova SaaS — Acordo Sólido v2',
         debugShowCheckedModeBanner: false,
         theme: SimPropostaTheme.light,
         darkTheme: SimPropostaTheme.dark,

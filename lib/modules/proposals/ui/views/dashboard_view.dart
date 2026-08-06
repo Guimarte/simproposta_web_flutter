@@ -52,7 +52,13 @@ class _DashboardViewState extends State<DashboardView> {
               isDark ? 'assets/images/simproposta-logo-fundo-escuro-v2.png' : 'assets/images/simproposta-logo-fundo-claro-v2.png',
               height: 38,
               errorBuilder: (context, error, stackTrace) {
-                return Image.asset('assets/images/simproposta-logo-horizontal.png', height: 36);
+                return Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline_rounded, color: SimPropostaColors.teal, size: 24),
+                    const SizedBox(width: 8),
+                    Text('SimAprova', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: textMain)),
+                  ],
+                );
               },
             ),
             const SizedBox(width: 16),
