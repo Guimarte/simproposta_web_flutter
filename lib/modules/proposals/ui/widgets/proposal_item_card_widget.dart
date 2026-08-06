@@ -1,3 +1,4 @@
+import 'dart:html' as html;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../../core/constants/simproposta_colors.dart';
@@ -8,18 +9,19 @@ class ProposalItemCardWidget extends StatelessWidget {
 
   const ProposalItemCardWidget({super.key, required this.item});
 
-  void _copyProposalLink(BuildContext context) {
+  String _getProposalLink() {
     const apiHost = String.fromEnvironment('API_HOST', defaultValue: 'https://api.simaprova.com.br');
-    
-    // Slug dinâmico da empresa cadastrada no banco de dados
     final rawCompanyName = item.companyName ?? 'empresa';
     final companySlug = rawCompanyName
         .toLowerCase()
         .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
         .replaceAll(RegExp(r'^-+|-+$'), '');
 
-    final link = '$apiHost/$companySlug/${item.slug}';
+    return '$apiHost/$companySlug/${item.slug}';
+  }
 
+  void _copyProposalLink(BuildContext context) {
+    final link = _getProposalLink();
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -28,6 +30,20 @@ class ProposalItemCardWidget extends StatelessWidget {
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  void _openWhatsApp(BuildContext context) {
+    final link = _getProposalLink();
+    final message = Uri.encodeComponent(
+      'Olá ${item.clientName}, tudo bem? Segue a proposta comercial "${item.title}" elaborada exclusivamente para você: $link',
+    );
+
+    final whatsappUrl = 'https://wa.me/?text=$message';
+    try {
+      html.window.open(whatsappUrl, '_blank');
+    } catch (_) {
+      Clipboard.setData(ClipboardData(text: 'https://wa.me/?text=$message'));
+    }
   }
 
   @override
@@ -86,11 +102,11 @@ class ProposalItemCardWidget extends StatelessWidget {
             'R\$ ${item.totalValue.toStringAsFixed(2)}',
             style: TextStyle(color: textMain, fontWeight: FontWeight.bold, fontSize: 15),
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 16),
           
           // Badge de Status V2
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
               color: isAccepted
                   ? SimPropostaColors.teal.withOpacity(0.15)
@@ -119,21 +135,37 @@ class ProposalItemCardWidget extends StatelessWidget {
                     : isViewed
                         ? primaryColor
                         : SimPropostaColors.warning,
-                fontSize: 12,
+                fontSize: 11,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
 
+          // Botão WhatsApp
+          ElevatedButton.icon(
+            onPressed: () => _openWhatsApp(context),
+            icon: const Icon(Icons.chat_bubble_outline_rounded, size: 15),
+            label: const Text('Enviar WhatsApp', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF25D366),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              elevation: 0,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // Botão Copiar Link
           OutlinedButton.icon(
             onPressed: () => _copyProposalLink(context),
-            icon: const Icon(Icons.copy_rounded, size: 16),
-            label: const Text('Copiar Link White-Label', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            icon: const Icon(Icons.copy_rounded, size: 15),
+            label: const Text('Copiar Link', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             style: OutlinedButton.styleFrom(
               foregroundColor: textMain,
               side: BorderSide(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
