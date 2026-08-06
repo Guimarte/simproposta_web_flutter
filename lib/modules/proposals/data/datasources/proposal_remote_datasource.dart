@@ -3,7 +3,11 @@ import 'package:http/http.dart' as http;
 import '../../domain/entities/proposal_entity.dart';
 
 class ProposalRemoteDatasource {
-  static const String baseUrl = 'http://localhost:3333/api';
+  // URL Oficial em Produção (Locaweb / Render API)
+  static const String baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'https://api.simproposta.com.br/api',
+  );
 
   Future<List<ProposalEntity>> getProposals(String token) async {
     final response = await http.get(

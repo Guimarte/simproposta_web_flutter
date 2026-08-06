@@ -4,7 +4,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/entities/user_entity.dart';
 
 class AuthRemoteDatasource {
-  static const String baseUrl = 'http://localhost:3333/api';
+  // URL Oficial em Produção (Locaweb / Render API)
+  static const String baseUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: 'https://api.simproposta.com.br/api',
+  );
+  
   static const String _tokenKey = 'simproposta_jwt_token';
 
   /// Dispara a autenticação por e-mail e senha integrada ao Supabase Auth + API Node.js

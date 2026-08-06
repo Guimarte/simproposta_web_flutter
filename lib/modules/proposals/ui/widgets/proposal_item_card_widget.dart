@@ -9,7 +9,8 @@ class ProposalItemCardWidget extends StatelessWidget {
   const ProposalItemCardWidget({super.key, required this.item});
 
   void _copyProposalLink(BuildContext context) {
-    final link = 'http://localhost:3333/p/${item.slug}';
+    const apiHost = String.fromEnvironment('API_HOST', defaultValue: 'https://api.simproposta.com.br');
+    final link = '$apiHost/p/${item.slug}';
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
