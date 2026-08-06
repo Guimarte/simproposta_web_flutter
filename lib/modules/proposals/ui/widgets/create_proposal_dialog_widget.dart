@@ -29,13 +29,26 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
   void _showEditBlockDialog(int index) {
     final block = blocks[index];
     final titleController = TextEditingController(text: (block['title'] ?? '').toString());
+    final isPriceTable = block['type'] == 'PRICE_TABLE';
+    final isVideo = block['type'] == 'VIDEO';
 
     String rawContent = '';
+    List<Map<String, dynamic>> itemsList = [];
+
     final contentObj = block['content'];
     if (contentObj is Map) {
+      if (contentObj['items'] is List) {
+        itemsList = List<Map<String, dynamic>>.from(
+          (contentObj['items'] as List).map((x) => Map<String, dynamic>.from(x)),
+        );
+      }
       rawContent = (contentObj['text'] ?? contentObj['url'] ?? contentObj['videoUrl'] ?? '').toString();
     } else if (contentObj is String) {
       rawContent = contentObj;
+    }
+
+    if (isPriceTable && itemsList.isEmpty) {
+      itemsList.add({'name': 'Item / Serviço', 'description': 'Descrição do serviço inclusos no valor', 'price': 0.0});
     }
 
     final contentController = TextEditingController(text: rawContent);
@@ -47,98 +60,188 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
         final bgCard = isDark ? SimPropostaColors.darkSurface : SimPropostaColors.surface;
         final bgInput = isDark ? SimPropostaColors.darkInputBackground : SimPropostaColors.offWhite;
         final textMain = isDark ? SimPropostaColors.darkTextPrimary : SimPropostaColors.navy;
+        final textSub = isDark ? SimPropostaColors.darkTextSecondary : SimPropostaColors.textSecondary;
+        final primaryColor = isDark ? SimPropostaColors.darkPrimary : SimPropostaColors.teal;
 
-        return AlertDialog(
-          backgroundColor: bgCard,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          title: Row(
-            children: [
-              const Icon(Icons.edit_note_rounded, color: SimPropostaColors.teal),
-              const SizedBox(width: 8),
-              Text('Editar Bloco (${block['type']})', style: TextStyle(color: textMain, fontWeight: FontWeight.bold, fontSize: 16)),
-            ],
-          ),
-          content: SizedBox(
-            width: 480,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextFormField(
-                  controller: titleController,
-                  style: TextStyle(color: textMain),
-                  decoration: InputDecoration(
-                    labelText: 'Título do Bloco',
-                    filled: true,
-                    fillColor: bgInput,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: bgCard,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              title: Row(
+                children: [
+                  Icon(
+                    isPriceTable
+                        ? Icons.table_chart_rounded
+                        : isVideo
+                            ? Icons.video_library_rounded
+                            : Icons.edit_note_rounded,
+                    color: primaryColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Editar Bloco (${block['type']})', style: TextStyle(color: textMain, fontWeight: FontWeight.bold, fontSize: 16)),
+                ],
+              ),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      TextFormField(
+                        controller: titleController,
+                        style: TextStyle(color: textMain),
+                        decoration: InputDecoration(
+                          labelText: 'Título do Bloco',
+                          filled: true,
+                          fillColor: bgInput,
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      if (isPriceTable) ...[
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Itens & Preços da Tabela:', style: TextStyle(color: textMain, fontSize: 13, fontWeight: FontWeight.bold)),
+                            TextButton.icon(
+                              onPressed: () {
+                                setDialogState(() {
+                                  itemsList.add({'name': 'Novo Item', 'description': 'Descrição do item', 'price': 0.0});
+                                });
+                              },
+                              icon: Icon(Icons.add, size: 16, color: primaryColor),
+                              label: Text('+ Adicionar Item', style: TextStyle(color: primaryColor, fontSize: 12, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        ...itemsList.asMap().entries.map((entry) {
+                          final itemIdx = entry.key;
+                          final itemData = entry.value;
+
+                          final nameCtrl = TextEditingController(text: (itemData['name'] ?? '').toString());
+                          final descCtrl = TextEditingController(text: (itemData['description'] ?? '').toString());
+                          final priceCtrl = TextEditingController(text: (itemData['price'] ?? 0).toString());
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 10),
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: bgInput,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
+                            ),
+                            child: Column(
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 2,
+                                      child: TextFormField(
+                                        controller: nameCtrl,
+                                        onChanged: (v) => itemsList[itemIdx]['name'] = v,
+                                        style: TextStyle(color: textMain, fontSize: 13),
+                                        decoration: const InputDecoration(labelText: 'Nome do Item', isDense: true),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      flex: 1,
+                                      child: TextFormField(
+                                        controller: priceCtrl,
+                                        onChanged: (v) => itemsList[itemIdx]['price'] = double.tryParse(v) ?? 0.0,
+                                        keyboardType: TextInputType.number,
+                                        style: TextStyle(color: textMain, fontSize: 13),
+                                        decoration: const InputDecoration(labelText: 'Valor R\$', isDense: true),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.delete_outline, color: SimPropostaColors.error, size: 18),
+                                      onPressed: () {
+                                        setDialogState(() {
+                                          itemsList.removeAt(itemIdx);
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                TextFormField(
+                                  controller: descCtrl,
+                                  onChanged: (v) => itemsList[itemIdx]['description'] = v,
+                                  style: TextStyle(color: textSub, fontSize: 12),
+                                  decoration: const InputDecoration(labelText: 'Descrição detalhada do item', isDense: true),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ] else ...[
+                        Text(
+                          isVideo ? 'Link do Vídeo (YouTube / Vimeo):' : 'Descrição dos Serviços / Texto:',
+                          style: TextStyle(color: textMain, fontSize: 13, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: contentController,
+                          maxLines: isVideo ? 2 : 5,
+                          style: TextStyle(color: textMain),
+                          decoration: InputDecoration(
+                            hintText: isVideo ? 'https://www.youtube.com/watch?v=...' : 'Escreva os detalhes do projeto...',
+                            filled: true,
+                            fillColor: bgInput,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ]
+                    ],
                   ),
                 ),
-                const SizedBox(height: 14),
-                Text(
-                  block['type'] == 'TEXT'
-                      ? 'Descrição do Serviço / Texto da Proposta:'
-                      : block['type'] == 'VIDEO'
-                          ? 'Link do Vídeo (YouTube / Vimeo):'
-                          : 'Tabela de Preços & Condições:',
-                  style: TextStyle(color: textMain, fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('Cancelar'),
                 ),
-                const SizedBox(height: 6),
-                TextFormField(
-                  controller: contentController,
-                  maxLines: block['type'] == 'TEXT' ? 5 : 2,
-                  style: TextStyle(color: textMain),
-                  decoration: InputDecoration(
-                    hintText: block['type'] == 'TEXT'
-                        ? 'Escreva os detalhes do projeto...'
-                        : block['type'] == 'VIDEO'
-                            ? 'https://www.youtube.com/watch?v=...'
-                            : 'Itens, quantidades e valores...',
-                    filled: true,
-                    fillColor: bgInput,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primaryColor,
+                    foregroundColor: isDark ? SimPropostaColors.darkBackground : Colors.white,
                   ),
+                  onPressed: () {
+                    setState(() {
+                      blocks[index]['title'] = titleController.text.trim();
+
+                      if (isPriceTable) {
+                        blocks[index]['content'] = {'items': itemsList};
+                      } else if (isVideo) {
+                        String input = contentController.text.trim();
+                        RegExp urlRegex = RegExp(r'https?://[^\s"]+');
+                        Match? match = urlRegex.firstMatch(input);
+                        String cleanUrl = match != null ? match.group(0)! : input;
+                        blocks[index]['content'] = {'videoUrl': cleanUrl};
+                      } else {
+                        blocks[index]['content'] = {'text': contentController.text.trim()};
+                      }
+                    });
+
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('✅ Bloco atualizado com sucesso!'),
+                        backgroundColor: SimPropostaColors.teal,
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  },
+                  child: const Text('Salvar Bloco'),
                 ),
               ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: SimPropostaColors.teal,
-                foregroundColor: Colors.white,
-              ),
-              onPressed: () {
-                setState(() {
-                  blocks[index]['title'] = titleController.text.trim();
-                  if (block['type'] == 'VIDEO') {
-                    // Sanitiza o link de vídeo para garantir que salve apenas a URL limpa
-                    String input = contentController.text.trim();
-                    RegExp urlRegex = RegExp(r'https?://[^\s"]+');
-                    Match? match = urlRegex.firstMatch(input);
-                    String cleanUrl = match != null ? match.group(0)! : input;
-
-                    blocks[index]['content'] = {'videoUrl': cleanUrl};
-                  } else {
-                    blocks[index]['content'] = {'text': contentController.text.trim()};
-                  }
-                });
-                Navigator.of(ctx).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('✅ Bloco atualizado com sucesso!'),
-                    backgroundColor: SimPropostaColors.teal,
-                    duration: Duration(seconds: 1),
-                  ),
-                );
-              },
-              child: const Text('Salvar Bloco'),
-            ),
-          ],
+            );
+          },
         );
       },
     );
@@ -492,7 +595,7 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                       const Icon(Icons.edit, size: 13, color: SimPropostaColors.teal),
                     ],
                   ),
-                  Text('Tipo: ${block['type']} (Clique para editar o texto/conteúdo)',
+                  Text('Tipo: ${block['type']} (Clique para editar o texto/itens da tabela)',
                       style: TextStyle(color: textSub, fontSize: 11)),
                 ],
               ),
