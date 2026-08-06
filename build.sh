@@ -17,5 +17,5 @@ echo "⚙️ Habilitando suporte a Flutter Web e instalando dependências..."
 flutter config --enable-web
 flutter pub get
 
-echo "📦 Compilando Flutter Web em modo Release..."
-flutter build web --release
+echo "📦 Compilando Flutter Web em modo Release com base-href=/ ..."
+flutter build web --release --base-href=/
