@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/simproposta_colors.dart';
 import '../../../../core/mixins/validation_mixin.dart';
 import '../../../auth/cubit/auth_cubit.dart';
 import '../../../auth/cubit/auth_state.dart';
@@ -25,6 +25,121 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
   final _totalValueController = TextEditingController();
 
   bool _isLoading = false;
+
+  void _showEditBlockDialog(int index) {
+    final block = blocks[index];
+    final titleController = TextEditingController(text: block['title'] ?? '');
+    
+    // Tratamento de conteúdo (Texto puro ou JSON String)
+    String rawContent = '';
+    final contentObj = block['content'];
+    if (contentObj is Map) {
+      rawContent = contentObj['text'] ?? contentObj['url'] ?? '';
+    } else if (contentObj is String) {
+      rawContent = contentObj;
+    }
+
+    final contentController = TextEditingController(text: rawContent);
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
+        final bgCard = isDark ? SimPropostaColors.darkSurface : SimPropostaColors.surface;
+        final bgInput = isDark ? SimPropostaColors.darkInputBackground : SimPropostaColors.offWhite;
+        final textMain = isDark ? SimPropostaColors.darkTextPrimary : SimPropostaColors.navy;
+
+        return AlertDialog(
+          backgroundColor: bgCard,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          title: Row(
+            children: [
+              const Icon(Icons.edit_note_rounded, color: SimPropostaColors.teal),
+              const SizedBox(width: 8),
+              Text('Editar Bloco (${block['type']})', style: TextStyle(color: textMain, fontWeight: FontWeight.bold, fontSize: 16)),
+            ],
+          ),
+          content: Container(
+            width: 480,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextFormField(
+                  controller: titleController,
+                  style: TextStyle(color: textMain),
+                  decoration: InputDecoration(
+                    labelText: 'Título do Bloco',
+                    filled: true,
+                    fillColor: bgInput,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  block['type'] == 'TEXT'
+                      ? 'Conteúdo do Texto / Descrição:'
+                      : block['type'] == 'VIDEO'
+                          ? 'Link do Vídeo (YouTube / Vimeo):'
+                          : 'Tabela de Preços & Condições:',
+                  style: TextStyle(color: textMain, fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 6),
+                TextFormField(
+                  controller: contentController,
+                  maxLines: block['type'] == 'TEXT' ? 5 : 2,
+                  style: TextStyle(color: textMain),
+                  decoration: InputDecoration(
+                    hintText: block['type'] == 'TEXT'
+                        ? 'Escreva os detalhes do projeto...'
+                        : block['type'] == 'VIDEO'
+                            ? 'https://www.youtube.com/watch?v=...'
+                            : 'Itens, quantidades e valores...',
+                    filled: true,
+                    fillColor: bgInput,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SimPropostaColors.teal,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                setState(() {
+                  blocks[index]['title'] = titleController.text.trim();
+                  if (block['type'] == 'TEXT') {
+                    blocks[index]['content'] = {'text': contentController.text.trim()};
+                  } else if (block['type'] == 'VIDEO') {
+                    blocks[index]['content'] = {'url': contentController.text.trim()};
+                  } else {
+                    blocks[index]['content'] = {'text': contentController.text.trim()};
+                  }
+                });
+                Navigator.of(ctx).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('✅ Bloco atualizado com sucesso!'),
+                    backgroundColor: SimPropostaColors.teal,
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              },
+              child: const Text('Salvar Bloco'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
@@ -53,7 +168,7 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('🎉 Proposta criada com sucesso! Link disponível.'),
-            backgroundColor: AppColors.primary,
+            backgroundColor: SimPropostaColors.teal,
           ),
         );
       }
@@ -62,7 +177,7 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erro ao criar proposta: ${e.toString()}'),
-            backgroundColor: AppColors.error,
+            backgroundColor: SimPropostaColors.error,
           ),
         );
       }
@@ -73,13 +188,20 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgCard = isDark ? SimPropostaColors.darkSurface : SimPropostaColors.surface;
+    final bgInput = isDark ? SimPropostaColors.darkInputBackground : SimPropostaColors.offWhite;
+    final textMain = isDark ? SimPropostaColors.darkTextPrimary : SimPropostaColors.navy;
+    final textSub = isDark ? SimPropostaColors.darkTextSecondary : SimPropostaColors.textSecondary;
+    final primaryColor = isDark ? SimPropostaColors.darkPrimary : SimPropostaColors.teal;
+
     return Dialog(
-      backgroundColor: AppColors.cardBackground,
+      backgroundColor: bgCard,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
-        width: 650,
+        width: 680,
         height: MediaQuery.of(context).size.height * 0.85,
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(28),
         child: Form(
           key: _formKey,
           child: Column(
@@ -89,26 +211,26 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(Icons.add_task_rounded, color: AppColors.primary),
-                      SizedBox(width: 8),
+                      Icon(Icons.add_task_rounded, color: primaryColor),
+                      const SizedBox(width: 8),
                       Text(
                         'Criar Nova Proposta Comercial',
                         style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white),
+                            color: textMain),
                       ),
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(Icons.close, color: Colors.white70),
+                    icon: Icon(Icons.close, color: textSub),
                     onPressed: () => Navigator.of(context).pop(),
                   )
                 ],
               ),
-              const Divider(color: AppColors.border, height: 24),
+              Divider(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border, height: 24),
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -117,9 +239,9 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                       TextFormField(
                         controller: _titleController,
                         validator: (v) => validateNotEmpty(v, 'Título'),
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: textMain),
                         decoration: _buildInputDecoration('Título da Proposta',
-                            'Ex: Redesign & Tráfego Pago', Icons.title),
+                            'Ex: Redesign & Tráfego Pago', Icons.title, bgInput, textSub, primaryColor),
                       ),
                       const SizedBox(height: 12),
                       Row(
@@ -129,11 +251,11 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                               controller: _clientNameController,
                               validator: (v) =>
                                   validateNotEmpty(v, 'Nome do Cliente'),
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: textMain),
                               decoration: _buildInputDecoration(
                                   'Nome do Cliente',
                                   'Ex: Loja ABC',
-                                  Icons.person_outline),
+                                  Icons.person_outline, bgInput, textSub, primaryColor),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -143,11 +265,11 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                               validator: (v) =>
                                   validateNumber(v, 'Valor Total'),
                               keyboardType: TextInputType.number,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: textMain),
                               decoration: _buildInputDecoration(
                                   'Valor Total (R\$)',
                                   'Ex: 8500.00',
-                                  Icons.attach_money),
+                                  Icons.attach_money, bgInput, textSub, primaryColor),
                             ),
                           ),
                         ],
@@ -159,22 +281,22 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                             child: TextFormField(
                               controller: _clientEmailController,
                               validator: validateEmail,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: textMain),
                               decoration: _buildInputDecoration(
                                   'E-mail do Cliente',
                                   'cliente@empresa.com',
-                                  Icons.email_outlined),
+                                  Icons.email_outlined, bgInput, textSub, primaryColor),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextFormField(
                               controller: _clientPhoneController,
-                              style: const TextStyle(color: Colors.white),
+                              style: TextStyle(color: textMain),
                               decoration: _buildInputDecoration(
                                   'WhatsApp do Cliente',
                                   '11999998888',
-                                  Icons.phone_android),
+                                  Icons.phone_android, bgInput, textSub, primaryColor),
                             ),
                           ),
                         ],
@@ -183,12 +305,12 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Blocos da Proposta',
+                          Text(
+                            'Blocos da Proposta (Clique para Editar)',
                             style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white),
+                                color: textMain),
                           ),
                           PopupMenuButton<String>(
                             onSelected: (value) {
@@ -222,20 +344,19 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                             ],
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 6),
+                                  horizontal: 12, vertical: 8),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.15),
-                                border: Border.all(color: AppColors.primary),
+                                color: primaryColor.withOpacity(0.15),
+                                border: Border.all(color: primaryColor),
                                 borderRadius: BorderRadius.circular(8),
                               ),
-                              child: const Row(
+                              child: Row(
                                 children: [
-                                  Icon(Icons.add,
-                                      color: AppColors.primary, size: 18),
-                                  SizedBox(width: 4),
+                                  Icon(Icons.add, color: primaryColor, size: 18),
+                                  const SizedBox(width: 4),
                                   Text('Adicionar Bloco',
                                       style: TextStyle(
-                                          color: AppColors.primary,
+                                          color: primaryColor,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13)),
                                 ],
@@ -247,17 +368,16 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                       const SizedBox(height: 12),
                       if (blocks.isEmpty)
                         Container(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(24),
                           decoration: BoxDecoration(
-                            color: AppColors.background,
+                            color: bgInput,
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: AppColors.border),
+                            border: Border.all(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'Nenhum bloco adicionado. Clique acima para adicionar texto, vídeo ou tabela de preços.',
-                              style: TextStyle(
-                                  color: AppColors.textMuted, fontSize: 13),
+                              'Nenhum bloco adicionado. Clique em "+ Adicionar Bloco" acima para montar sua proposta.',
+                              style: TextStyle(color: textSub, fontSize: 13),
                               textAlign: TextAlign.center,
                             ),
                           ),
@@ -269,7 +389,7 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                           itemCount: blocks.length,
                           itemBuilder: (context, index) {
                             final block = blocks[index];
-                            return _buildBlockItem(block, index);
+                            return _buildBlockItem(block, index, isDark, textMain, textSub, primaryColor);
                           },
                         ),
                     ],
@@ -282,15 +402,14 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                 children: [
                   TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Cancelar',
-                        style: TextStyle(color: AppColors.textMuted)),
+                    child: Text('Cancelar', style: TextStyle(color: textSub)),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _submitForm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
+                      backgroundColor: primaryColor,
+                      foregroundColor: isDark ? SimPropostaColors.darkBackground : Colors.white,
                       padding: const EdgeInsets.symmetric(
                           horizontal: 24, vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -301,7 +420,7 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
-                                color: Colors.black, strokeWidth: 2))
+                                color: Colors.white, strokeWidth: 2))
                         : const Text('Salvar e Gerar Link',
                             style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
@@ -315,30 +434,31 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
   }
 
   InputDecoration _buildInputDecoration(
-      String label, String hint, IconData icon) {
+      String label, String hint, IconData icon, Color bg, Color subColor, Color accent) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      hintStyle: const TextStyle(color: Color(0xFF64748B)),
-      labelStyle: const TextStyle(color: AppColors.textMuted),
-      prefixIcon: Icon(icon, color: AppColors.primary, size: 20),
+      hintStyle: TextStyle(color: subColor.withOpacity(0.5)),
+      labelStyle: TextStyle(color: subColor),
+      prefixIcon: Icon(icon, color: accent, size: 20),
       filled: true,
-      fillColor: AppColors.background,
+      fillColor: bg,
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: BorderSide(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
       ),
     );
   }
 
-  Widget _buildBlockItem(Map<String, dynamic> block, int index) {
+  Widget _buildBlockItem(Map<String, dynamic> block, int index, bool isDark, Color textMain, Color textSub, Color accent) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: isDark ? SimPropostaColors.darkInputBackground : SimPropostaColors.offWhite,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
       ),
       child: Row(
         children: [
@@ -348,28 +468,41 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                 : block['type'] == 'VIDEO'
                     ? Icons.video_library
                     : Icons.table_chart,
-            color: AppColors.primary,
+            color: accent,
             size: 20,
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(block['title'] ?? 'Bloco',
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13)),
-                Text('Tipo: ${block['type']}',
-                    style: const TextStyle(
-                        color: AppColors.textMuted, fontSize: 11)),
-              ],
+            child: InkWell(
+              onTap: () => _showEditBlockDialog(index),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(block['title'] ?? 'Bloco',
+                          style: TextStyle(
+                              color: textMain,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13)),
+                      const SizedBox(width: 6),
+                      const Icon(Icons.edit, size: 13, color: SimPropostaColors.teal),
+                    ],
+                  ),
+                  Text('Tipo: ${block['type']} (Clique para editar o texto/conteúdo)',
+                      style: TextStyle(color: textSub, fontSize: 11)),
+                ],
+              ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.delete_outline,
-                color: AppColors.error, size: 20),
+            icon: const Icon(Icons.edit_outlined, color: SimPropostaColors.teal, size: 20),
+            tooltip: 'Editar Conteúdo do Bloco',
+            onPressed: () => _showEditBlockDialog(index),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline, color: SimPropostaColors.error, size: 20),
+            tooltip: 'Remover Bloco',
             onPressed: () => removeBlock(index),
           )
         ],

@@ -12,7 +12,7 @@ import 'package:simproposta_web_flutter/main.dart';
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const SimPropostaApp());
+    await tester.pumpWidget(const SimAprovaApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
