@@ -116,7 +116,13 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                 setState(() {
                   blocks[index]['title'] = titleController.text.trim();
                   if (block['type'] == 'VIDEO') {
-                    blocks[index]['content'] = {'videoUrl': contentController.text.trim()};
+                    // Sanitiza o link de vídeo para garantir que salve apenas a URL limpa
+                    String input = contentController.text.trim();
+                    RegExp urlRegex = RegExp(r'https?://[^\s"]+');
+                    Match? match = urlRegex.firstMatch(input);
+                    String cleanUrl = match != null ? match.group(0)! : input;
+
+                    blocks[index]['content'] = {'videoUrl': cleanUrl};
                   } else {
                     blocks[index]['content'] = {'text': contentController.text.trim()};
                   }
