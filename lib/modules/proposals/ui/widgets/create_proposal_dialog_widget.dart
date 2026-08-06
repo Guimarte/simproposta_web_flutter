@@ -28,13 +28,12 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
 
   void _showEditBlockDialog(int index) {
     final block = blocks[index];
-    final titleController = TextEditingController(text: block['title'] ?? '');
-    
-    // Tratamento de conteúdo (Texto puro ou JSON String)
+    final titleController = TextEditingController(text: (block['title'] ?? '').toString());
+
     String rawContent = '';
     final contentObj = block['content'];
     if (contentObj is Map) {
-      rawContent = contentObj['text'] ?? contentObj['url'] ?? '';
+      rawContent = (contentObj['text'] ?? contentObj['url'] ?? contentObj['videoUrl'] ?? '').toString();
     } else if (contentObj is String) {
       rawContent = contentObj;
     }
@@ -59,7 +58,7 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
               Text('Editar Bloco (${block['type']})', style: TextStyle(color: textMain, fontWeight: FontWeight.bold, fontSize: 16)),
             ],
           ),
-          content: Container(
+          content: SizedBox(
             width: 480,
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -78,7 +77,7 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
                 const SizedBox(height: 14),
                 Text(
                   block['type'] == 'TEXT'
-                      ? 'Conteúdo do Texto / Descrição:'
+                      ? 'Descrição do Serviço / Texto da Proposta:'
                       : block['type'] == 'VIDEO'
                           ? 'Link do Vídeo (YouTube / Vimeo):'
                           : 'Tabela de Preços & Condições:',
@@ -116,10 +115,8 @@ class _CreateProposalDialogWidgetState extends State<CreateProposalDialogWidget>
               onPressed: () {
                 setState(() {
                   blocks[index]['title'] = titleController.text.trim();
-                  if (block['type'] == 'TEXT') {
-                    blocks[index]['content'] = {'text': contentController.text.trim()};
-                  } else if (block['type'] == 'VIDEO') {
-                    blocks[index]['content'] = {'url': contentController.text.trim()};
+                  if (block['type'] == 'VIDEO') {
+                    blocks[index]['content'] = {'videoUrl': contentController.text.trim()};
                   } else {
                     blocks[index]['content'] = {'text': contentController.text.trim()};
                   }
