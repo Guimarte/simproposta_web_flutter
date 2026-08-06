@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Identidade visual SimProposta v2 — "Acordo Sólido" com suporte a Tema Claro e Tema Escuro.
+/// Identidade visual SimProposta / SimAprova v2 — "Acordo Sólido" com suporte a Tema Claro e Tema Escuro.
 abstract final class SimPropostaColors {
   // Paleta Base V2
   static const Color navy = Color(0xFF071A2B);        // Autoridade / Navy Profundo
@@ -24,6 +24,7 @@ abstract final class SimPropostaColors {
   static const Color darkBackground = Color(0xFF051320);     // Fundo Navy Ultra Escuro
   static const Color darkSurface = Color(0xFF0A2136);        // Cartões Navy Elevados
   static const Color darkSurfaceSubtle = Color(0xFF0D2A44);  // Fundo de Campos de Entrada
+  static const Color darkInputBackground = Color(0xFF0D2A44); // Fundo de Campos de Entrada (Alias)
   static const Color darkBorder = Color(0xFF1A3D5D);         // Borda Azul Navy Escuro
   static const Color darkTextPrimary = Color(0xFFF3F7F8);    // Texto Branco Frio
   static const Color darkTextSecondary = Color(0xFF8AA4B7);  // Texto Azul Prateado
