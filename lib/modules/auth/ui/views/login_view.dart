@@ -14,7 +14,7 @@ class LoginView extends StatefulWidget {
 
 class _LoginViewState extends State<LoginView> with ValidationMixin {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController(text: 'admin@simproposta.com');
+  final _emailController = TextEditingController(text: 'admin@simaprova.com.br');
   final _passwordController = TextEditingController(text: 'admin123');
 
   void _onLoginPressed() {
@@ -53,8 +53,9 @@ class _LoginViewState extends State<LoginView> with ValidationMixin {
               if (state is AuthError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(state.message),
+                    content: Text('⚠️ ${state.message}'),
                     backgroundColor: SimPropostaColors.error,
+                    duration: const Duration(seconds: 4),
                   ),
                 );
               }
@@ -85,6 +86,35 @@ class _LoginViewState extends State<LoginView> with ValidationMixin {
                       ),
                     ),
                     const SizedBox(height: 36),
+
+                    // Alerta Inline de Erro de Autenticação
+                    if (state is AuthError)
+                      Container(
+                        margin: const EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: SimPropostaColors.error.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: SimPropostaColors.error.withOpacity(0.4)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.error_outline_rounded, color: SimPropostaColors.error, size: 20),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                state.message,
+                                style: const TextStyle(
+                                  color: SimPropostaColors.error,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
                     TextFormField(
                       controller: _emailController,
                       validator: validateEmail,
