@@ -10,13 +10,16 @@ class ProposalItemCardWidget extends StatelessWidget {
 
   void _copyProposalLink(BuildContext context) {
     const apiHost = String.fromEnvironment('API_HOST', defaultValue: 'https://api.simproposta.com.br');
-    final link = '$apiHost/p/${item.slug}';
+    // Gera a URL White-Label: https://api.simproposta.com.br/nome-da-empresa/slug-da-proposta
+    final companySlug = 'agencia-solucoes'; // Slug da empresa cliente
+    final link = '$apiHost/$companySlug/${item.slug}';
+
     Clipboard.setData(ClipboardData(text: link));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('📋 Link da proposta copiado para a área de transferência!'),
+      SnackBar(
+        content: Text('📋 Link White-Label copiado: $link'),
         backgroundColor: SimPropostaColors.teal,
-        duration: Duration(seconds: 2),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -120,7 +123,7 @@ class ProposalItemCardWidget extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: () => _copyProposalLink(context),
             icon: const Icon(Icons.copy_rounded, size: 16),
-            label: const Text('Copiar Link', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            label: const Text('Copiar Link White-Label', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             style: OutlinedButton.styleFrom(
               foregroundColor: textMain,
               side: BorderSide(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
