@@ -7,6 +7,7 @@ import '../../../admin/ui/widgets/update_theme_dialog_widget.dart';
 import '../../../auth/cubit/auth_cubit.dart';
 import '../../../auth/cubit/auth_state.dart';
 import '../../../supervisor/ui/widgets/create_company_dialog_widget.dart';
+import '../../../supervisor/ui/widgets/super_admin_report_widget.dart';
 import '../../cubit/proposals_cubit.dart';
 import '../../cubit/proposals_state.dart';
 import '../widgets/create_proposal_dialog_widget.dart';
@@ -73,7 +74,7 @@ class _DashboardViewState extends State<DashboardView> {
                 ),
               ),
               child: Text(
-                role == 'SUPER_ADMIN' ? 'SUPERVISOR' : (user?.companyName ?? 'EMPRESA'),
+                role == 'SUPER_ADMIN' ? 'PAINEL SUPERVISOR SAAS' : (user?.companyName ?? 'LOJA'),
                 style: TextStyle(
                   color: role == 'SUPER_ADMIN' ? SimPropostaColors.supervisor : primaryColor,
                   fontSize: 11,
@@ -99,7 +100,7 @@ class _DashboardViewState extends State<DashboardView> {
           const SizedBox(width: 12),
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(28.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -112,12 +113,14 @@ class _DashboardViewState extends State<DashboardView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Visão Geral — ${user?.name ?? "Usuário"}',
+                      role == 'SUPER_ADMIN' ? 'Painel Administrativo do Supervisor' : 'Visão Geral — ${user?.name ?? "Usuário"}',
                       style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textMain),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Acordo Sólido — Confiança imediatamente visível.',
+                      role == 'SUPER_ADMIN'
+                          ? 'Gestão de Lojas Clientes, Limite de Vendedores e Volume de Emissão de Propostas.'
+                          : 'Acordo Sólido — Confiança imediatamente visível.',
                       style: TextStyle(color: textSub, fontSize: 14),
                     ),
                   ],
@@ -129,11 +132,11 @@ class _DashboardViewState extends State<DashboardView> {
                       ElevatedButton.icon(
                         onPressed: () => showDialog(context: context, builder: (_) => const CreateCompanyDialogWidget()),
                         icon: const Icon(Icons.add_business_rounded, size: 18),
-                        label: const Text('Cadastrar Nova Loja'),
+                        label: const Text('Cadastrar Nova Loja / Cliente'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: SimPropostaColors.supervisor,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                       ),
@@ -182,47 +185,52 @@ class _DashboardViewState extends State<DashboardView> {
             ),
             const SizedBox(height: 28),
 
-            // Métricas em Cards
-            BlocBuilder<ProposalsCubit, ProposalsState>(
-              builder: (context, state) {
-                int totalCount = 0;
-                double totalValue = 0.0;
+            // MODO 1: Se for SUPER_ADMIN -> Exibe Relatório Administrativo do SaaS
+            if (role == 'SUPER_ADMIN')
+              const SuperAdminReportWidget()
 
-                if (state is ProposalsLoaded) {
-                  totalCount = state.proposals.length;
-                  totalValue = state.proposals.fold(0.0, (sum, item) => sum + item.totalValue);
-                }
+            // MODO 2: Se for COMPANY_ADMIN ou SELLER -> Exibe Operacional de Vendas da Loja
+            else ...[
+              // Métricas em Cards de Vendas
+              BlocBuilder<ProposalsCubit, ProposalsState>(
+                builder: (context, state) {
+                  int totalCount = 0;
+                  double totalValue = 0.0;
 
-                return Row(
-                  children: [
-                    MetricCardWidget(
-                      label: 'Total de Propostas Enviadas',
-                      value: '$totalCount',
-                      icon: Icons.description_outlined,
-                      color: primaryColor,
-                    ),
-                    const SizedBox(width: 16),
-                    MetricCardWidget(
-                      label: 'Faturamento em Negociação',
-                      value: 'R\$ ${totalValue.toStringAsFixed(2)}',
-                      icon: Icons.attach_money_rounded,
-                      color: SimPropostaColors.mint,
-                    ),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: 32),
+                  if (state is ProposalsLoaded) {
+                    totalCount = state.proposals.length;
+                    totalValue = state.proposals.fold(0.0, (sum, item) => sum + item.totalValue);
+                  }
 
-            Text(
-              'Propostas Comerciais Ativas',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textMain),
-            ),
-            const SizedBox(height: 16),
+                  return Row(
+                    children: [
+                      MetricCardWidget(
+                        label: 'Total de Propostas Enviadas',
+                        value: '$totalCount',
+                        icon: Icons.description_outlined,
+                        color: primaryColor,
+                      ),
+                      const SizedBox(width: 16),
+                      MetricCardWidget(
+                        label: 'Faturamento em Negociação',
+                        value: 'R\$ ${totalValue.toStringAsFixed(2)}',
+                        icon: Icons.attach_money_rounded,
+                        color: SimPropostaColors.mint,
+                      ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 32),
 
-            // Lista de Propostas
-            Expanded(
-              child: BlocBuilder<ProposalsCubit, ProposalsState>(
+              Text(
+                'Propostas Comerciais Ativas',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textMain),
+              ),
+              const SizedBox(height: 16),
+
+              // Lista de Propostas da Loja
+              BlocBuilder<ProposalsCubit, ProposalsState>(
                 builder: (context, state) {
                   if (state is ProposalsLoading) {
                     return Center(child: CircularProgressIndicator(color: primaryColor));
@@ -249,6 +257,8 @@ class _DashboardViewState extends State<DashboardView> {
                     }
 
                     return ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
                       itemCount: state.proposals.length,
                       itemBuilder: (context, index) {
                         final item = state.proposals[index];
@@ -259,7 +269,7 @@ class _DashboardViewState extends State<DashboardView> {
                   return const SizedBox();
                 },
               ),
-            ),
+            ]
           ],
         ),
       ),
