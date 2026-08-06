@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/constants/simproposta_colors.dart';
+import '../../../../core/widgets/skeleton_loading_widget.dart';
 import '../../../admin/ui/widgets/create_seller_dialog_widget.dart';
 import '../../../admin/ui/widgets/update_theme_dialog_widget.dart';
 import '../../../auth/cubit/auth_cubit.dart';
@@ -11,8 +12,6 @@ import '../../../supervisor/ui/widgets/super_admin_report_widget.dart';
 import '../../cubit/proposals_cubit.dart';
 import '../../cubit/proposals_state.dart';
 import '../widgets/create_proposal_dialog_widget.dart';
-import '../widgets/donut_chart_widget.dart';
-import '../widgets/line_chart_widget.dart';
 import '../widgets/proposal_item_card_widget.dart';
 import '../widgets/store_analytics_widget.dart';
 import 'reports_view.dart';
@@ -132,12 +131,12 @@ class _DashboardViewState extends State<DashboardView> {
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard_outlined),
               activeIcon: Icon(Icons.dashboard_rounded),
-              label: 'Home / Dashboard',
+              label: 'Home / Painel Principal',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics_outlined),
               activeIcon: Icon(Icons.analytics_rounded),
-              label: 'Relatórios & Gráficos',
+              label: 'Relatórios & Analytics',
             ),
           ],
         ),
@@ -167,7 +166,7 @@ class _DashboardViewState extends State<DashboardView> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    role == 'SUPER_ADMIN' ? 'Painel Administrativo do Supervisor' : 'Painel Comercial — ${user?.name ?? "Usuário"}',
+                    role == 'SUPER_ADMIN' ? 'Painel Administrativo do Supervisor' : 'Visão Geral Commercial — ${user?.name ?? "Usuário"}',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textMain),
                   ),
                   const SizedBox(height: 4),
@@ -248,54 +247,17 @@ class _DashboardViewState extends State<DashboardView> {
             BlocBuilder<ProposalsCubit, ProposalsState>(
               builder: (context, state) {
                 if (state is ProposalsLoading) {
-                  return Center(child: Padding(padding: const EdgeInsets.all(40), child: CircularProgressIndicator(color: primaryColor)));
+                  return const DashboardSkeletonView();
                 }
                 if (state is ProposalsError) {
                   return Center(child: Text(state.message, style: const TextStyle(color: SimPropostaColors.error)));
                 }
                 if (state is ProposalsLoaded) {
-                  final int acceptedCount = state.proposals.where((p) => p.status == 'ACCEPTED').length;
-                  final int viewedCount = state.proposals.where((p) => p.status == 'VIEWED').length;
-                  final int sentCount = state.proposals.where((p) => p.status == 'SENT').length;
-                  final int draftCount = state.proposals.where((p) => p.status == 'DRAFT').length;
-
-                  final donutSegments = [
-                    ChartSegment(label: 'Aprovadas Digitalmente', value: acceptedCount.toDouble(), color: SimPropostaColors.mint),
-                    ChartSegment(label: 'Lidas em Tempo Real', value: viewedCount.toDouble(), color: primaryColor),
-                    ChartSegment(label: 'Aguardando Leitura', value: sentCount.toDouble(), color: SimPropostaColors.warning),
-                    ChartSegment(label: 'Rascunhos / Em Edição', value: draftCount.toDouble(), color: textSub.withOpacity(0.5)),
-                  ];
-
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // KPIs e Funil
+                      // KPIs da Home
                       StoreAnalyticsWidget(proposals: state.proposals),
-                      const SizedBox(height: 28),
-
-                      // Gráficos Principais na Home (Pizza + Linha)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(
-                            flex: 5,
-                            child: DonutChartWidget(
-                              title: 'Distribuição das Vendas (Pizza)',
-                              segments: donutSegments,
-                              centerValue: '${state.proposals.length}',
-                              centerLabel: 'PROPOSTAS',
-                            ),
-                          ),
-                          const SizedBox(width: 18),
-                          Expanded(
-                            flex: 6,
-                            child: LineChartWidget(
-                              title: 'Curva de Faturamento Negociado',
-                              proposals: state.proposals,
-                            ),
-                          ),
-                        ],
-                      ),
                       const SizedBox(height: 32),
 
                       Text(

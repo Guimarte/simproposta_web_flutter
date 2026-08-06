@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/constants/simproposta_colors.dart';
+import '../../../../core/widgets/skeleton_loading_widget.dart';
 import '../../cubit/proposals_cubit.dart';
 import '../../cubit/proposals_state.dart';
 import '../../domain/entities/proposal_entity.dart';
@@ -16,7 +17,7 @@ class ReportsView extends StatefulWidget {
 }
 
 class _ReportsViewState extends State<ReportsView> {
-  String _selectedPeriod = 'ALL'; // 7D, 30D, 90D, ALL
+  String _selectedPeriod = 'ALL';
 
   List<ProposalEntity> _filterProposals(List<ProposalEntity> list) {
     if (_selectedPeriod == 'ALL') return list;
@@ -43,7 +44,7 @@ class _ReportsViewState extends State<ReportsView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Cabeçalho da Tela de Relatórios
+          // Cabeçalho da Tela de Relatórios Analíticos
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -63,7 +64,7 @@ class _ReportsViewState extends State<ReportsView> {
               ),
               // Filtro por Período
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                 decoration: BoxDecoration(
                   color: bgCard,
                   borderRadius: BorderRadius.circular(10),
@@ -93,7 +94,7 @@ class _ReportsViewState extends State<ReportsView> {
           BlocBuilder<ProposalsCubit, ProposalsState>(
             builder: (context, state) {
               if (state is ProposalsLoading) {
-                return Center(child: Padding(padding: const EdgeInsets.all(40), child: CircularProgressIndicator(color: primaryColor)));
+                return const DashboardSkeletonView();
               }
               if (state is ProposalsError) {
                 return Center(child: Text(state.message, style: const TextStyle(color: SimPropostaColors.error)));
@@ -121,45 +122,67 @@ class _ReportsViewState extends State<ReportsView> {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Cards de Métricas Secundárias de Analytics
+                    // Cards de Métricas Analíticas
                     Row(
                       children: [
                         _buildReportMetricCard('Ticket Médio por Proposta', 'R\$ ${ticketMedio.toStringAsFixed(2)}', Icons.payments_outlined, primaryColor, isDark, textMain, textSub),
-                        const SizedBox(width: 14),
-                        _buildReportMetricCard('Propostas em Negociação', 'R\$ ${totalVal.toStringAsFixed(2)}', Icons.account_balance_wallet_outlined, SimPropostaColors.mint, isDark, textMain, textSub),
-                        const SizedBox(width: 14),
-                        _buildReportMetricCard('Total no Período Selecionado', '$totalCount propostas', Icons.description_outlined, SimPropostaColors.warning, isDark, textMain, textSub),
+                        const SizedBox(width: 16),
+                        _buildReportMetricCard('Propostas no Período', '$totalCount propostas', Icons.description_outlined, SimPropostaColors.mint, isDark, textMain, textSub),
+                        const SizedBox(width: 16),
+                        _buildReportMetricCard('Volume Financeiro Filtrado', 'R\$ ${totalVal.toStringAsFixed(2)}', Icons.account_balance_wallet_outlined, SimPropostaColors.warning, isDark, textMain, textSub),
                       ],
                     ),
                     const SizedBox(height: 28),
 
-                    // Gráficos Lado a Lado: Donut (Pizza) + Linha (Evolução)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 5,
-                          child: DonutChartWidget(
-                            title: 'Distribuição do Funil (Pizza)',
-                            segments: donutSegments,
-                            centerValue: '$totalCount',
-                            centerLabel: 'PROPOSTAS',
-                          ),
-                        ),
-                        const SizedBox(width: 18),
-                        Expanded(
-                          flex: 6,
-                          child: LineChartWidget(
-                            title: 'Evolução Financeira Temporal',
-                            proposals: filtered,
-                          ),
-                        ),
-                      ],
+                    // Gráficos Lado a Lado com Espaçamento Limpo de 24px
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        if (constraints.maxWidth > 900) {
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                flex: 5,
+                                child: DonutChartWidget(
+                                  title: 'Distribuição do Funil (Pizza)',
+                                  segments: donutSegments,
+                                  centerValue: '$totalCount',
+                                  centerLabel: 'PROPOSTAS',
+                                ),
+                              ),
+                              const SizedBox(width: 24),
+                              Expanded(
+                                flex: 6,
+                                child: LineChartWidget(
+                                  title: 'Evolução Financeira Temporal',
+                                  proposals: filtered,
+                                ),
+                              ),
+                            ],
+                          );
+                        } else {
+                          return Column(
+                            children: [
+                              DonutChartWidget(
+                                title: 'Distribuição do Funil (Pizza)',
+                                segments: donutSegments,
+                                centerValue: '$totalCount',
+                                centerLabel: 'PROPOSTAS',
+                              ),
+                              const SizedBox(height: 24),
+                              LineChartWidget(
+                                title: 'Evolução Financeira Temporal',
+                                proposals: filtered,
+                              ),
+                            ],
+                          );
+                        }
+                      },
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 36),
 
                     Text(
-                      'Detalhamento das Propostas Filtradas',
+                      'Detalhamento das Propostas no Período',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textMain),
                     ),
                     const SizedBox(height: 16),
@@ -208,30 +231,37 @@ class _ReportsViewState extends State<ReportsView> {
   ) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: isDark ? SimPropostaColors.darkSurface : SimPropostaColors.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: isDark ? SimPropostaColors.darkBorder : SimPropostaColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: (isDark ? Colors.black : SimPropostaColors.navy).withOpacity(0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(label, style: TextStyle(color: textSub, fontSize: 11, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 2),
-                  Text(value, style: TextStyle(color: textMain, fontSize: 18, fontWeight: FontWeight.bold)),
+                  Text(label, style: TextStyle(color: textSub, fontSize: 12, fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  Text(value, style: TextStyle(color: textMain, fontSize: 19, fontWeight: FontWeight.bold)),
                 ],
               ),
             ),
