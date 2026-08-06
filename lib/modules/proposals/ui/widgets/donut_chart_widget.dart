@@ -144,9 +144,9 @@ class _DonutPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (totalValue <= 0) {
       final paint = Paint()
-        color = Colors.grey.withOpacity(0.2)
-        style = PaintingStyle.stroke
-        strokeWidth = 22.0;
+        ..color = Colors.grey.withOpacity(0.2)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 22.0;
       canvas.drawCircle(size.center(Offset.zero), size.width / 2 - 11, paint);
       return;
     }
